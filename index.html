@@ -1,0 +1,2421 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LifeCoach">
+    <meta name="theme-color" content="#0D1117">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <title>LifeCoach</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0D1117;
+            color: #E6EDF3;
+            font-size: 16px;
+            position: fixed;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        header {
+            background: #161B22;
+            padding: max(16px, env(safe-area-inset-top)) 16px 12px;
+            border-bottom: 1px solid #30363D;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #E6EDF3;
+            padding: 8px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .main {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .tab-content {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            padding: 16px;
+            padding-bottom: 80px;
+            -webkit-overflow-scrolling: touch;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: max(60px, env(safe-area-inset-bottom) + 60px);
+            background: #161B22;
+            border-top: 1px solid #30363D;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: #8B949E;
+            font-size: 24px;
+            padding: 12px 8px;
+            cursor: pointer;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            -webkit-tap-highlight-color: transparent;
+            transition: color 0.2s;
+        }
+
+        .nav-btn.active {
+            color: #3FB950;
+        }
+
+        .nav-btn span:first-child {
+            font-size: 24px;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            z-index: 999;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        .modal {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #161B22;
+            border-top: 1px solid #30363D;
+            border-radius: 16px 16px 0 0;
+            z-index: 1000;
+            max-height: 90vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            animation: slideUp 0.3s ease-out;
+            transform: translateY(0);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid #30363D;
+            position: sticky;
+            top: 0;
+            background: #161B22;
+        }
+
+        .modal-header h2 {
+            font-size: 18px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #8B949E;
+            cursor: pointer;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .modal-body {
+            padding: 16px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="time"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            background: #0D1117;
+            border: 1px solid #30363D;
+            color: #E6EDF3;
+            border-radius: 8px;
+            margin: 8px 0;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #30363D;
+            outline: none;
+            -webkit-appearance: none;
+            margin: 16px 0;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3FB950;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3FB950;
+            cursor: pointer;
+            border: none;
+        }
+
+        button {
+            padding: 12px 16px;
+            background: #3FB950;
+            color: #0D1117;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            margin: 8px 0;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        button:active {
+            opacity: 0.8;
+        }
+
+        .card {
+            background: #161B22;
+            border: 1px solid #30363D;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 12px 0;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .stat-card {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat {
+            background: #0D1117;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #8B949E;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #3FB950;
+        }
+
+        .habit-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #0D1117;
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+
+        .habit-emoji {
+            font-size: 28px;
+        }
+
+        .habit-info {
+            flex: 1;
+        }
+
+        .habit-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .habit-streak {
+            font-size: 12px;
+            color: #8B949E;
+        }
+
+        .habit-dots {
+            display: flex;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .habit-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #30363D;
+        }
+
+        .habit-dot.done {
+            background: #3FB950;
+        }
+
+        .check-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #30363D;
+            border: none;
+            color: #E6EDF3;
+            font-size: 20px;
+            cursor: pointer;
+            flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .check-btn.done {
+            background: #3FB950;
+            color: #0D1117;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #3FB950;
+            color: #0D1117;
+            border: none;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(63, 185, 80, 0.3);
+            z-index: 500;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .fab:active {
+            transform: scale(0.95);
+        }
+
+        .pin-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0D1117;
+            display: none;
+            z-index: 2000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .pin-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .pin-container {
+            text-align: center;
+        }
+
+        .pin-input {
+            font-size: 48px;
+            letter-spacing: 16px;
+            margin: 32px 0;
+            width: 200px;
+            text-align: center;
+        }
+
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 80px);
+            gap: 12px;
+            margin: 32px 0;
+        }
+
+        .numpad-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #161B22;
+            border: 1px solid #30363D;
+            color: #E6EDF3;
+            font-size: 28px;
+            font-weight: 600;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .numpad-btn:active {
+            background: #30363D;
+        }
+
+        .pin-shake {
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+            20%, 40%, 60%, 80% { transform: translateX(8px); }
+        }
+
+        .story-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0D1117;
+            display: none;
+            z-index: 1500;
+            flex-direction: column;
+            padding: max(16px, env(safe-area-inset-top)) 16px 16px;
+        }
+
+        .story-overlay.active {
+            display: flex;
+        }
+
+        .story-dots {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .story-dot {
+            height: 3px;
+            flex: 1;
+            background: #30363D;
+            border-radius: 2px;
+        }
+
+        .story-dot.active {
+            background: #3FB950;
+        }
+
+        .story-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .story-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .story-slide {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .story-slide h2 {
+            font-size: 24px;
+            margin: 16px 0;
+        }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin: 16px 0;
+        }
+
+        .emoji-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            background: #0D1117;
+            border: 2px solid #30363D;
+            font-size: 32px;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .emoji-btn.selected {
+            border-color: #3FB950;
+            background: #1C3A1C;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin: 16px 0;
+        }
+
+        .color-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .color-btn.selected {
+            border-color: #E6EDF3;
+        }
+
+        .story-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .story-buttons button {
+            flex: 1;
+        }
+
+        .story-btn-secondary {
+            background: #30363D;
+            color: #E6EDF3;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 16px 0;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #0D1117;
+            border-radius: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .svg-chart {
+            width: 100%;
+            height: 200px;
+            margin: 16px 0;
+        }
+
+        .event-item {
+            padding: 12px;
+            background: #0D1117;
+            border-left: 4px solid #3FB950;
+            border-radius: 4px;
+            margin: 8px 0;
+        }
+
+        .event-date {
+            font-size: 12px;
+            color: #8B949E;
+        }
+
+        .event-name {
+            font-weight: 600;
+            margin: 4px 0;
+        }
+
+        .calendar {
+            width: 100%;
+            margin: 16px 0;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .calendar-nav {
+            background: none;
+            border: none;
+            color: #E6EDF3;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .calendar-day-label {
+            text-align: center;
+            font-size: 12px;
+            color: #8B949E;
+            padding: 8px;
+            font-weight: 600;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            position: relative;
+            font-size: 14px;
+            background: #0D1117;
+            border: 1px solid #30363D;
+        }
+
+        .calendar-day:not(.other-month):hover {
+            background: #30363D;
+        }
+
+        .calendar-day.other-month {
+            color: #30363D;
+        }
+
+        .calendar-day.today {
+            background: #3FB950;
+            color: #0D1117;
+            font-weight: 600;
+        }
+
+        .calendar-day.has-event::after {
+            content: '•';
+            position: absolute;
+            bottom: 2px;
+            font-size: 20px;
+            color: #3FB950;
+        }
+
+        .calendar-day.holiday {
+            color: #D29922;
+            font-weight: 700;
+        }
+
+        .calendar-day.holiday::before {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            border: 1px solid rgba(210,153,34,0.3);
+            border-radius: 50%;
+        }
+
+        .greeting {
+            font-size: 32px;
+            font-weight: 600;
+            margin: 12px 0;
+        }
+
+        .upcoming-events {
+            margin-top: 16px;
+        }
+
+        .upcoming-events h3 {
+            font-size: 14px;
+            color: #8B949E;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        input[type="checkbox"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #30363D;
+            border-radius: 4px;
+            background: #0D1117;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        input[type="checkbox"]:checked {
+            background: #3FB950;
+            border-color: #3FB950;
+        }
+
+        input[type="checkbox"]:checked::after {
+            content: '✓';
+            color: #0D1117;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .success-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #3FB950;
+            color: #0D1117;
+            padding: 24px;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: 600;
+            z-index: 2500;
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            from { transform: translate(-50%, -50%) scale(0.5); }
+            to { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .frequency-badge {
+            display: inline-block;
+            background: #3FB950;
+            color: #0D1117;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .tabs-horizontal {
+            display: flex;
+            gap: 12px;
+            margin: 16px 0;
+            border-bottom: 1px solid #30363D;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: #8B949E;
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            -webkit-tap-highlight-color: transparent;
+            margin-bottom: -1px;
+        }
+
+        .tab-btn.active {
+            color: #3FB950;
+            border-bottom-color: #3FB950;
+        }
+
+        .macro-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .macro-card {
+            background: #0D1117;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .macro-label {
+            font-size: 12px;
+            color: #8B949E;
+        }
+
+        .macro-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #3FB950;
+            margin-top: 4px;
+        }
+
+        .delete-btn {
+            background: #DA3633;
+            color: white;
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .edit-btn {
+            background: #3FB950;
+        }
+
+        .secondary-btn {
+            background: #30363D;
+            color: #E6EDF3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>LifeCoach</h1>
+            <button class="settings-btn" id="settingsBtn">⚙️</button>
+        </header>
+
+        <div class="main">
+            <!-- MA TAB -->
+            <div class="tab-content active" id="maTab">
+                <div id="greeting" class="greeting"></div>
+
+                <div class="stat-card">
+                    <div class="stat">
+                        <div class="stat-label">Szokások ma</div>
+                        <div class="stat-value" id="habitsProgress">0/0</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Kalória</div>
+                        <div class="stat-value" id="caloriesProgress">0/2500</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Utolsó súly</div>
+                        <div class="stat-value" id="lastWeight">-</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Alvás</div>
+                        <div class="stat-value" id="lastSleep">-</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Következő események</h3>
+                    <div id="upcomingEvents"></div>
+                </div>
+
+                <div class="card" id="recentWorkoutCard" style="display:none;">
+                    <h3>Legutóbbi edzés</h3>
+                    <div id="recentWorkout"></div>
+                </div>
+            </div>
+
+            <!-- SZOKÁSOK TAB -->
+            <div class="tab-content" id="habitTab">
+                <div id="habitList"></div>
+            </div>
+
+            <!-- FITNESS TAB -->
+            <div class="tab-content" id="fitnessTab">
+                <div class="tabs-horizontal">
+                    <button class="tab-btn active" data-tab="workouts">Edzés</button>
+                    <button class="tab-btn" data-tab="calories">Kalória</button>
+                    <button class="tab-btn" data-tab="weight">Súly</button>
+                </div>
+
+                <div id="workouts" class="tab-section">
+                    <div class="card">
+                        <h3>Mai edzés</h3>
+                        <input type="text" id="workoutName" placeholder="Edzés neve">
+                        <button id="loadTemplateBtn">📋 Sablon betöltése</button>
+                        <div id="exercisesList"></div>
+                        <button id="addExerciseBtn">+ Gyakorlat hozzáadása</button>
+                        <textarea id="workoutNotes" placeholder="Megjegyzések"></textarea>
+                        <button id="saveWorkoutBtn">Edzés mentése</button>
+                    </div>
+
+                    <h3 style="margin-top: 24px;">Előzmények</h3>
+                    <div id="workoutHistory"></div>
+                </div>
+
+                <div id="calories" class="tab-section" style="display:none;">
+                    <svg id="calorieChart" class="svg-chart"></svg>
+
+                    <div class="macro-row">
+                        <div class="macro-card">
+                            <div class="macro-label">Fehérje</div>
+                            <div class="macro-value" id="proteinValue">0g</div>
+                        </div>
+                        <div class="macro-card">
+                            <div class="macro-label">Szénhidrát</div>
+                            <div class="macro-value" id="carbsValue">0g</div>
+                        </div>
+                        <div class="macro-card">
+                            <div class="macro-label">Zsír</div>
+                            <div class="macro-value" id="fatValue">0g</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>🌅 Reggeli</h3>
+                        <div id="breakfastList"></div>
+                        <button class="secondary-btn" onclick="app.openAddFoodModal('breakfast')">+ Étel hozzáadása</button>
+                    </div>
+
+                    <div class="card">
+                        <h3>☀️ Ebéd</h3>
+                        <div id="lunchList"></div>
+                        <button class="secondary-btn" onclick="app.openAddFoodModal('lunch')">+ Étel hozzáadása</button>
+                    </div>
+
+                    <div class="card">
+                        <h3>🌙 Vacsora</h3>
+                        <div id="dinnerList"></div>
+                        <button class="secondary-btn" onclick="app.openAddFoodModal('dinner')">+ Étel hozzáadása</button>
+                    </div>
+
+                    <div class="card">
+                        <h3>🍿 Snack</h3>
+                        <div id="snackList"></div>
+                        <button class="secondary-btn" onclick="app.openAddFoodModal('snack')">+ Étel hozzáadása</button>
+                    </div>
+
+                    <h3 style="margin-top: 24px;">Kalória előzmények</h3>
+                    <svg id="calorieHistoryChart" class="svg-chart"></svg>
+                </div>
+
+                <div id="weight" class="tab-section" style="display:none;">
+                    <div class="card">
+                        <div style="text-align: center; padding: 24px 0;">
+                            <div style="font-size: 14px; color: #8B949E; margin-bottom: 8px;">Aktuális súly</div>
+                            <div id="currentWeight" style="font-size: 48px; font-weight: 600; color: #3FB950;">-</div>
+                            <div style="font-size: 14px; color: #8B949E; margin-top: 8px;">kg</div>
+                        </div>
+                        <button onclick="app.openWeightModal()">⚖️ Súly feljegyzése</button>
+                    </div>
+
+                    <svg id="weightChart" class="svg-chart"></svg>
+
+                    <div class="stat-card">
+                        <div class="stat">
+                            <div class="stat-label">Min</div>
+                            <div class="stat-value" id="minWeight">-</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Max</div>
+                            <div class="stat-value" id="maxWeight">-</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Átlag</div>
+                            <div class="stat-value" id="avgWeight">-</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Trend</div>
+                            <div class="stat-value" id="weightTrend">→</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ALVÁS TAB -->
+            <div class="tab-content" id="sleepTab">
+                <button id="logSleepBtn" class="card" style="border: none; padding: 24px; text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 8px;">😴</div>
+                    <div style="font-size: 18px; font-weight: 600;">Alvás naplózása</div>
+                </button>
+
+                <div class="card">
+                    <h3>Tegnapi alvás</h3>
+                    <div id="lastNightSummary">-</div>
+                </div>
+
+                <h3>Utolsó 7 nap</h3>
+                <svg id="sleepChart" class="svg-chart"></svg>
+
+                <div class="stat-card">
+                    <div class="stat">
+                        <div class="stat-label">Átlag időtartam</div>
+                        <div class="stat-value" id="avgSleepDuration">-</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Átlag minőség</div>
+                        <div class="stat-value" id="avgSleepQuality">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NAPTÁR TAB -->
+            <div class="tab-content" id="calendarTab">
+                <div class="calendar-header">
+                    <button class="calendar-nav" id="prevMonthBtn">←</button>
+                    <h2 id="monthYear"></h2>
+                    <button class="calendar-nav" id="nextMonthBtn">→</button>
+                </div>
+
+                <div class="calendar-grid" id="calendarGrid"></div>
+
+                <div class="upcoming-events">
+                    <h3>Következő események</h3>
+                    <div id="upcomingEventsList"></div>
+                </div>
+            </div>
+        </div>
+
+        <nav>
+            <button class="nav-btn active" data-tab="maTab">
+                <span>🏠</span>
+                <span>Ma</span>
+            </button>
+            <button class="nav-btn" data-tab="habitTab">
+                <span>✅</span>
+                <span>Szokások</span>
+            </button>
+            <button class="nav-btn" data-tab="fitnessTab">
+                <span>🏋️</span>
+                <span>Fitness</span>
+            </button>
+            <button class="nav-btn" data-tab="sleepTab">
+                <span>😴</span>
+                <span>Alvás</span>
+            </button>
+            <button class="nav-btn" data-tab="calendarTab">
+                <span>📅</span>
+                <span>Naptár</span>
+            </button>
+        </nav>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+
+    <!-- PIN LOCK -->
+    <div class="pin-overlay" id="pinOverlay">
+        <div class="pin-container">
+            <h2 id="pinTitle">PIN kód megadása</h2>
+            <input type="password" id="pinInput" class="pin-input" readonly>
+            <div class="numpad" id="numpad"></div>
+        </div>
+    </div>
+
+    <!-- STORY QUESTIONNAIRE -->
+    <div class="story-overlay" id="storyOverlay">
+        <div class="story-header">
+            <div style="width: 24px;"></div>
+            <div class="story-dots" id="storyDots"></div>
+            <button class="close-btn" onclick="app.closeStory()">✕</button>
+        </div>
+        <div class="story-content" id="storyContent"></div>
+        <div class="story-buttons" id="storyButtons"></div>
+    </div>
+
+    <!-- FAB FOR STORY -->
+    <button class="fab" id="storyFab" style="display:none;" onclick="app.openStory()">📋</button>
+
+    <!-- MODALS -->
+    <div id="settingsModal" class="modal" style="display:none;">
+        <div class="modal-header">
+            <h2>Beállítások</h2>
+            <button class="close-btn" onclick="app.closeModal('settingsModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <h3>Név</h3>
+            <input type="text" id="nameSetting" placeholder="Neved">
+
+            <h3>PIN kód</h3>
+            <button onclick="app.openChangePinModal()">PIN megváltoztatása</button>
+
+            <h3>Kalória cél</h3>
+            <input type="number" id="calorieGoal" placeholder="2500">
+
+            <h3>Értesítések</h3>
+            <div style="display: flex; gap: 12px; margin: 12px 0;">
+                <input type="checkbox" id="notificationsEnabled">
+                <label for="notificationsEnabled">Értesítések engedélyezése</label>
+            </div>
+
+            <div id="notificationSettings" style="display:none;">
+                <label>Reggeli értesítés</label>
+                <input type="time" id="morningTime" value="08:00">
+
+                <label>Esti értesítés</label>
+                <input type="time" id="eveningTime" value="21:00">
+
+                <button onclick="app.requestNotificationPermission()">Engedély kérése</button>
+            </div>
+
+            <h3>Adatok</h3>
+            <button class="secondary-btn" onclick="app.exportData()">📥 Adatok exportálása</button>
+            <button class="secondary-btn" onclick="app.importDataBtn()">📤 Adatok importálása</button>
+            <input type="file" id="importFile" style="display:none;" accept=".json">
+            <button class="delete-btn" onclick="app.resetAllData()">Összes adat törlése</button>
+
+            <button onclick="app.closeModal('settingsModal')" style="margin-top: 24px;">Bezárás</button>
+        </div>
+    </div>
+
+    <div id="addHabitModal" class="modal" style="display:none;">
+        <div class="modal-header">
+            <h2 id="addHabitTitle">Szokás hozzáadása</h2>
+            <button class="close-btn" onclick="app.closeModal('addHabitModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="text" id="habitName" placeholder="Szokás neve">
+
+            <h3>Emoji</h3>
+            <div class="emoji-grid" id="emojiGrid"></div>
+
+            <h3>Szín</h3>
+            <div class="color-grid" id="colorGrid"></div>
+
+            <h3>Gyakorisági cél (napok/hét)</h3>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <input type="range" id="habitFrequency" min="1" max="7" value="7">
+                <span id="frequencyValue">7</span>
+            </div>
+
+            <button id="saveHabitBtn">Szokás mentése</button>
+        </div>
+    </div>
+
+    <div id="sleepModal" class="modal" style="display:none;">
+        <div class="modal-header">
+            <h2>Alvás naplózása</h2>
+            <button class="close-btn" onclick="app.closeModal('sleepModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <label>Lefekvés</label>
+            <input type="time" id="bedtime">
+
+            <label>Ébresztés</label>
+            <input type="time" id="wakeup">
+
+            <h3>Minőség</h3>
+            <div class="emoji-grid" id="qualityGrid"></div>
+
+            <button id="saveSleepBtn">Mentés</button>
+        </div>
+    </div>
+
+    <div id="weightModal" class="modal" style="display:none;">
+        <div class="modal-header">
+            <h2>Súly feljegyzése</h2>
+            <button class="close-btn" onclick="app.closeModal('weightModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="number" id="weightInput" placeholder="kg" step="0.1">
+            <button id="saveWeightBtn">Mentés</button>
+        </div>
+    </div>
+
+    <div id="addFoodModal" class="modal" style="display:none;">
+        <div class="modal-header">
+            <h2>Étel hozzáadása</h2>
+            <button class="close-btn" onclick="app.closeModal('addFoodModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="text" id="foodName" placeholder="Étel neve">
+            <input type="number" id="foodCalories" placeholder="Kalóriák" min="0">
+            <input type="number" id="foodProtein" placeholder="Fehérje (g)" min="0">
+            <input type="number" id="foodCarbs" placeholder="Szénhidrát (g)" min="0">
+            <input type="number" id="foodFat" placeholder="Zsír (g)" min="0">
+            <button id="addFoodBtn">Hozzáadás</button>
+        </div>
+    </div>
+
+    <div id="addEventModal" class="modal" style="display:none;">
+        <div class="modal-header">
+            <h2 id="eventModalTitle">Esemény hozzáadása</h2>
+            <button class="close-btn" onclick="app.closeModal('addEventModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <h3>Típus</h3>
+            <select id="eventType">
+                <option value="birthday">🎂 Születésnap</option>
+                <option value="nameday">🌸 Névnap</option>
+                <option value="anniversary">💍 Évforduló</option>
+                <option value="other">📌 Egyéb</option>
+            </select>
+
+            <input type="text" id="eventName" placeholder="Esemény neve">
+
+            <h3>Dátum</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <input type="number" id="eventMonth" placeholder="Hónap" min="1" max="12">
+                <input type="number" id="eventDay" placeholder="Nap" min="1" max="31">
+            </div>
+
+            <input type="number" id="eventYear" placeholder="Év (opcionális)">
+
+            <div style="display: flex; gap: 12px; margin: 12px 0;">
+                <input type="checkbox" id="eventRepeat">
+                <label for="eventRepeat">Minden évben ismétlődik</label>
+            </div>
+
+            <button id="saveEventBtn">Esemény mentése</button>
+        </div>
+    </div>
+
+    <!-- Day detail modal -->
+    <div id="dayDetailModal" class="modal" style="display:none;">
+        <div class="modal-header">
+            <h2>Napi részletek</h2>
+            <button class="close-btn" onclick="app.closeModal('dayDetailModal')">✕</button>
+        </div>
+        <div class="modal-body" id="dayDetailContent"></div>
+    </div>
+
+    <div id="changePinModal" class="modal" style="display:none;">
+        <div class="modal-header">
+            <h2>PIN megváltoztatása</h2>
+            <button class="close-btn" onclick="app.closeModal('changePinModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="password" id="oldPin" placeholder="Régi PIN" class="pin-input" readonly style="margin: 16px 0;">
+            <div class="numpad" id="changePinNumpad"></div>
+        </div>
+    </div>
+
+    <script>
+        const ND = {"1-1":"Fruzsina","1-2":"Ábel","1-3":"Genovéva","1-4":"Titusz","1-5":"Simon","1-6":"Boldizsár","1-7":"Attila","1-8":"Gyöngyvér","1-9":"Marcell","1-10":"Melánia","1-11":"Ágota","1-12":"Ernő","1-13":"Veronika","1-14":"Bódog","1-15":"Lóránt","1-16":"Gusztáv","1-17":"Antal","1-18":"Piroska","1-19":"Sára","1-20":"Fábián","1-21":"Ágnes","1-22":"Vince","1-23":"Zelma","1-24":"Timót","1-25":"Pál","1-26":"Vanda","1-27":"Angelika","1-28":"Károly","1-29":"Adél","1-30":"Martina","1-31":"Marcella","2-1":"Ignác","2-2":"Karolina","2-3":"Balázs","2-4":"Ráhel","2-5":"Ágota","2-6":"Dorottya","2-7":"Tódor","2-8":"Aranka","2-9":"Abigél","2-10":"Elvira","2-11":"Bertold","2-12":"Lívia","2-13":"Ella","2-14":"Bálint","2-15":"Kolos","2-16":"Julianna","2-17":"Donát","2-18":"Bernadett","2-19":"Zsuzsanna","2-20":"Anikó","2-21":"Eleonóra","2-22":"Gerzson","2-23":"Alfréd","2-24":"Mátyás","2-25":"Géza","2-26":"Edina","2-27":"Ákos","2-28":"Elemér","2-29":"Elemér","3-1":"Albin","3-2":"Lujza","3-3":"Kornélia","3-4":"Kázmér","3-5":"Adorján","3-6":"Leonóra","3-7":"Tamás","3-8":"Zoltán","3-9":"Franciska","3-10":"Ildikó","3-11":"Szilárd","3-12":"Gergely","3-13":"Krisztián","3-14":"Matild","3-15":"Kristóf","3-16":"Henrietta","3-17":"Gertrúd","3-18":"Sándor","3-19":"József","3-20":"Klaudia","3-21":"Benedek","3-22":"Beáta","3-23":"Emőke","3-24":"Gábor","3-25":"Irén","3-26":"Emánuel","3-27":"Hajnalka","3-28":"Gedeon","3-29":"Auguszta","3-30":"Zalán","3-31":"Árpád","4-1":"Hugó","4-2":"Áron","4-3":"Buda","4-4":"Izidor","4-5":"Vince","4-6":"Vilmos","4-7":"Herman","4-8":"Dénes","4-9":"Erhard","4-10":"Zsolt","4-11":"Leó","4-12":"Gyula","4-13":"Ida","4-14":"Tibor","4-15":"Anastázia","4-16":"Csongor","4-17":"Rudolf","4-18":"Andrea","4-19":"Emma","4-20":"Tivadar","4-21":"Konrád","4-22":"Csilla","4-23":"Béla","4-24":"György","4-25":"Márk","4-26":"Ervin","4-27":"Zita","4-28":"Valéria","4-29":"Péter","4-30":"Katalin","5-1":"Fülöp","5-2":"Zsigmond","5-3":"Tímea","5-4":"Mónika","5-5":"Györgyi","5-6":"Ivett","5-7":"Gizella","5-8":"Mihály","5-9":"Gergely","5-10":"Ármin","5-11":"Ferenc","5-12":"Pongrác","5-13":"Szervác","5-14":"Bonifác","5-15":"Zsófia","5-16":"Botond","5-17":"Paszkál","5-18":"Erik","5-19":"Ivó","5-20":"Bernát","5-21":"Konstantin","5-22":"Júlia","5-23":"Dezső","5-24":"Eszter","5-25":"Orbán","5-26":"Fülöp","5-27":"Hella","5-28":"Emil","5-29":"Magdolna","5-30":"Janka","5-31":"Angéla","6-1":"Tünde","6-2":"Kármen","6-3":"Klotild","6-4":"Bulcsú","6-5":"Fatime","6-6":"Norbert","6-7":"Róbert","6-8":"Medárd","6-9":"Félix","6-10":"Margit","6-11":"Barnabás","6-12":"Villő","6-13":"Antal","6-14":"Vazul","6-15":"Jolán","6-16":"Jusztin","6-17":"Laura","6-18":"Arnold","6-19":"Gyárfás","6-20":"Rafael","6-21":"Alajos","6-22":"Paulina","6-23":"Zoltán","6-24":"Iván","6-25":"Vilmos","6-26":"János","6-27":"László","6-28":"Levente","6-29":"Péter","6-30":"Pál","7-1":"Tihamér","7-2":"Ottó","7-3":"Kornél","7-4":"Ulrik","7-5":"Emese","7-6":"Csaba","7-7":"Apollónia","7-8":"Ellák","7-9":"Lukrécia","7-10":"Amália","7-11":"Lili","7-12":"Izabella","7-13":"Jenő","7-14":"Őrs","7-15":"Henrik","7-16":"Valter","7-17":"Endre","7-18":"Frigyes","7-19":"Emília","7-20":"Illés","7-21":"Dániel","7-22":"Magdolna","7-23":"Lenke","7-24":"Kinga","7-25":"Kristóf","7-26":"Anna","7-27":"Liliána","7-28":"Szabolcs","7-29":"Márta","7-30":"Judit","7-31":"Oszkár","8-1":"Boglárka","8-2":"Lehel","8-3":"Hermina","8-4":"Domonkos","8-5":"Krisztina","8-6":"Berta","8-7":"Ibolya","8-8":"László","8-9":"Emőd","8-10":"Lőrinc","8-11":"Zsuzsanna","8-12":"Klára","8-13":"Ipoly","8-14":"Marcell","8-15":"Mária","8-16":"Ábrahám","8-17":"Jácint","8-18":"Ilona","8-19":"Huba","8-20":"István","8-21":"Sámuel","8-22":"Menyhért","8-23":"Bence","8-24":"Bertalan","8-25":"Lajos","8-26":"Izsó","8-27":"Gáspár","8-28":"Ágoston","8-29":"Beatrix","8-30":"Rózsa","8-31":"Erika","9-1":"Egyed","9-2":"Rebeka","9-3":"Hilda","9-4":"Rozália","9-5":"Viktor","9-6":"Zakariás","9-7":"Regina","9-8":"Mária","9-9":"Ádám","9-10":"Nikolett","9-11":"Teodóra","9-12":"Mária","9-13":"Kornél","9-14":"Szeréna","9-15":"Enikő","9-16":"Edit","9-17":"Zsófia","9-18":"Diána","9-19":"Vilhelmina","9-20":"Friderika","9-21":"Máté","9-22":"Móric","9-23":"Tekla","9-24":"Gellért","9-25":"Eufrozina","9-26":"Jusztinián","9-27":"Adalbert","9-28":"Vencel","9-29":"Mihály","9-30":"Jeromos","10-1":"Malvin","10-2":"Petra","10-3":"Helga","10-4":"Ferenc","10-5":"Aurél","10-6":"Brúnó","10-7":"Amália","10-8":"Koppány","10-9":"Dénes","10-10":"Gedeon","10-11":"Brigitta","10-12":"Miksa","10-13":"Kálmán","10-14":"Helén","10-15":"Teréz","10-16":"Gál","10-17":"Hedvig","10-18":"Lukács","10-19":"Nándor","10-20":"Vendel","10-21":"Orsolya","10-22":"Előd","10-23":"Gyöngyi","10-24":"Salamon","10-25":"Bianka","10-26":"Dömötör","10-27":"Szabina","10-28":"Simon","10-29":"Nárcisz","10-30":"Alfonz","10-31":"Farkas","11-1":"Marianna","11-2":"Achilles","11-3":"Győző","11-4":"Károly","11-5":"Imre","11-6":"Lénárd","11-7":"Rezső","11-8":"Zsombor","11-9":"Tivadar","11-10":"Réka","11-11":"Márton","11-12":"Jónás","11-13":"Szilvia","11-14":"Aliz","11-15":"Albert","11-16":"Ödön","11-17":"Gergő","11-18":"Jenő","11-19":"Erzsébet","11-20":"Jolán","11-21":"Olivér","11-22":"Cecília","11-23":"Kelemen","11-24":"Emma","11-25":"Katalin","11-26":"Virgil","11-27":"Virgil","11-28":"Stefánia","11-29":"Taksony","11-30":"András","12-1":"Elza","12-2":"Melinda","12-3":"Ferenc","12-4":"Borbála","12-5":"Vilma","12-6":"Miklós","12-7":"Ambrus","12-8":"Mária","12-9":"Natália","12-10":"Judit","12-11":"Árpád","12-12":"Gabriella","12-13":"Luca","12-14":"Szilárda","12-15":"Valér","12-16":"Etelka","12-17":"Lázár","12-18":"Auguszta","12-19":"Viola","12-20":"Teofil","12-21":"Tamás","12-22":"Zénó","12-23":"Viktória","12-24":"Ádám","12-25":"Eugénia","12-26":"István","12-27":"János","12-28":"Kamilla","12-29":"Tamás","12-30":"Dávid","12-31":"Szilveszter"};
+
+        // Hungarian public holidays (Gauss Easter algorithm)
+        function getEaster(year) {
+            const a = year % 19, b = Math.floor(year/100), c = year % 100;
+            const d = Math.floor(b/4), e = b % 4, f = Math.floor((b+8)/25);
+            const g = Math.floor((b-f+1)/3), h = (19*a+b-d-g+15) % 30;
+            const i = Math.floor(c/4), k = c % 4;
+            const l = (32+2*e+2*i-h-k) % 7;
+            const m = Math.floor((a+11*h+22*l)/451);
+            const month = Math.floor((h+l-7*m+114)/31);
+            const day = ((h+l-7*m+114) % 31) + 1;
+            return new Date(year, month-1, day);
+        }
+        function getHolidays(year) {
+            const e = getEaster(year);
+            const em = new Date(e); em.setDate(e.getDate()+1); // Easter Monday
+            const wm = new Date(e); wm.setDate(e.getDate()+50); // Whit Monday
+            const fixed = [
+                {m:1,d:1,name:'🎉 Újév'},
+                {m:3,d:15,name:'🇭🇺 Nemzeti ünnep'},
+                {m:5,d:1,name:'🌸 Munka ünnepe'},
+                {m:8,d:20,name:'🇭🇺 Államalapítás'},
+                {m:10,d:23,name:'🇭🇺 Nemzeti ünnep'},
+                {m:11,d:1,name:'🕯️ Mindenszentek'},
+                {m:12,d:25,name:'🎄 Karácsony'},
+                {m:12,d:26,name:'🎄 Karácsony 2.'},
+            ];
+            return [
+                ...fixed,
+                {m:e.getMonth()+1,d:e.getDate(),name:'🐣 Húsvét vasárnap'},
+                {m:em.getMonth()+1,d:em.getDate(),name:'🐣 Húsvét hétfő'},
+                {m:wm.getMonth()+1,d:wm.getDate(),name:'🕊️ Pünkösd hétfő'},
+            ];
+        }
+
+        const EMOJIS = ['🎯','💪','🏃','🧘','📚','🍎','💧','⭐','🎨','😊','🌙','☀️','🔥','✨','🎭','🎵','🎮','🏠','❤️','🌟'];
+        const COLORS = ['#3FB950','#1F6FEB','#D29922','#DA3633','#9E6A03','#6E40C9','#86181D','#0E7239','#0550AE','#4A7BA7'];
+
+        const MORNING_MESSAGES = [
+            'Jó reggelt, {name}! 🌅 Kezdjük a napot!',
+            'Egy szép nap vár, {name}! Mozogj egy kicsit! 💪',
+            'Hajrá, {name}! Csodálatos nap lesz! ✨',
+            'Reggeli edzés? {name}! 🏃',
+            'Jó reggelt! Hogyan alultál? 😴',
+            'Ébudtál már, {name}? Kávé? ☕',
+            'Friss nappal, {name}! 🌟',
+            'Ideje felkelni! 😎 Mit csináltál volna manapság?',
+            'Reggel van! Kezdjük az új napot! 🚀',
+            'Jó reggelt a legjobb verzióhoz, {name}! 💚'
+        ];
+
+        const EVENING_MESSAGES = [
+            'Jó estét, {name}! 🌙 Hogy volt a nap?',
+            'Pihenj jól! 😴 Holnap új nap vár!',
+            'Este van, {name}! Meditations ideje? 🧘',
+            'Ászt végig, {name}! Szép nap volt? ✨',
+            'Holnapi terved van, {name}? 📋',
+            'Jó éjszakát! Aludj jól! 💤',
+            'Este van, pihenj! 🌙',
+            'Napod vége, {name}! 😊',
+            'Jó éjszakát! Holnap újra! ⭐',
+            'Este van! Gondolj az eredményeidre! 🏆'
+        ];
+
+        const HUNGARIAN_MONTHS = ['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
+        const HUNGARIAN_DAYS = ['Vasárnap','Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat'];
+
+        class LifeCoachApp {
+            constructor() {
+                this.currentUser = localStorage.getItem('settings') ? JSON.parse(localStorage.getItem('settings')).name : 'Botond';
+                this.currentMonth = new Date().getMonth();
+                this.currentYear = new Date().getFullYear();
+                this.storyIndex = 0;
+                this.currentFood = {};
+                this.currentExercise = null;
+                this.init();
+            }
+
+            init() {
+                this.checkPIN();
+                this.setupEventListeners();
+                this.renderUI();
+                this.scheduleNotifications();
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+                }
+            }
+
+            checkPIN() {
+                if (!localStorage.getItem('pin')) {
+                    document.getElementById('pinOverlay').classList.add('active');
+                    document.getElementById('pinTitle').textContent = 'PIN beállítása';
+                    this.setupPINPad(false);
+                } else {
+                    document.getElementById('pinOverlay').classList.add('active');
+                    document.getElementById('pinTitle').textContent = 'PIN megadása';
+                    this.setupPINPad(true);
+                }
+            }
+
+            setupPINPad(isVerify) {
+                const pad = document.getElementById('numpad');
+                pad.innerHTML = '';
+                let pinBuffer = '';
+
+                for (let i = 1; i <= 9; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'numpad-btn';
+                    btn.textContent = i;
+                    btn.onclick = () => this.addPINDigit(btn, isVerify, pinBuffer);
+                    pad.appendChild(btn);
+                }
+
+                const btn0 = document.createElement('button');
+                btn0.className = 'numpad-btn';
+                btn0.textContent = '0';
+                btn0.style.gridColumn = '2';
+                btn0.onclick = () => this.addPINDigit(btn0, isVerify, pinBuffer);
+                pad.appendChild(btn0);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'numpad-btn';
+                deleteBtn.textContent = '⌫';
+                deleteBtn.onclick = () => {
+                    const input = document.getElementById('pinInput');
+                    input.value = input.value.slice(0, -1);
+                };
+                pad.appendChild(deleteBtn);
+            }
+
+            addPINDigit(btn, isVerify, buffer) {
+                const input = document.getElementById('pinInput');
+                input.value += '●';
+                buffer += btn.textContent;
+
+                if (input.value.length === 4) {
+                    if (isVerify) {
+                        const storedPIN = localStorage.getItem('pin');
+                        if (buffer === storedPIN) {
+                            document.getElementById('pinOverlay').classList.remove('active');
+                        } else {
+                            document.getElementById('pinInput').classList.add('pin-shake');
+                            setTimeout(() => {
+                                document.getElementById('pinInput').classList.remove('pin-shake');
+                                document.getElementById('pinInput').value = '';
+                                buffer = '';
+                            }, 400);
+                        }
+                    } else {
+                        localStorage.setItem('pin', buffer);
+                        document.getElementById('pinOverlay').classList.remove('active');
+                        this.checkIfNeedStory();
+                    }
+                }
+            }
+
+            checkIfNeedStory() {
+                const today = new Date().toISOString().split('T')[0];
+                const checkin = JSON.parse(localStorage.getItem('checkin_log') || '{}');
+                if (!checkin[today]) {
+                    setTimeout(() => this.openStory(), 300);
+                }
+            }
+
+            setupEventListeners() {
+                // Navigation
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => this.switchTab(e.currentTarget.dataset.tab));
+                });
+
+                // Settings
+                document.getElementById('settingsBtn').addEventListener('click', () => this.openModal('settingsModal'));
+                document.getElementById('notificationsEnabled').addEventListener('change', (e) => {
+                    document.getElementById('notificationSettings').style.display = e.target.checked ? 'block' : 'none';
+                });
+
+                // Habits
+                document.querySelector('[data-tab="habitTab"]').addEventListener('click', () => this.renderHabits());
+
+                // Fitness tabs
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        document.querySelectorAll('.tab-section').forEach(s => s.style.display = 'none');
+                        document.getElementById(e.target.dataset.tab).style.display = 'block';
+                        if (e.target.dataset.tab === 'calories') this.renderCalories();
+                        if (e.target.dataset.tab === 'weight') this.renderWeight();
+                    });
+                });
+
+                // Sleep
+                document.getElementById('logSleepBtn').addEventListener('click', () => this.openSleepModal());
+
+                // Calendar
+                document.getElementById('prevMonthBtn').addEventListener('click', () => this.prevMonth());
+                document.getElementById('nextMonthBtn').addEventListener('click', () => this.nextMonth());
+
+                // Event save
+                document.getElementById('saveEventBtn').addEventListener('click', () => {
+                    const name = document.getElementById('eventName').value.trim();
+                    const month = parseInt(document.getElementById('eventMonth').value);
+                    const day = parseInt(document.getElementById('eventDay').value);
+                    const year = document.getElementById('eventYear') ? parseInt(document.getElementById('eventYear').value) || null : null;
+                    const type = document.getElementById('eventType') ? document.getElementById('eventType').value : 'event';
+                    const emoji = {birthday:'🎂', nameday:'🌸', anniversary:'💍', event:'📌'}[type] || '📌';
+                    if (!name || !month || !day) return;
+                    const events = JSON.parse(localStorage.getItem('events') || '[]');
+                    events.push({id: Date.now().toString(), name, month, day, year, type, emoji, repeat:'yearly'});
+                    localStorage.setItem('events', JSON.stringify(events));
+                    this.closeModal('addEventModal');
+                    this.renderCalendar();
+                    this.updateUpcomingEvents();
+                });
+            }
+
+            openEventModal(month, day) {
+                if (document.getElementById('eventMonth')) document.getElementById('eventMonth').value = month || '';
+                if (document.getElementById('eventDay')) document.getElementById('eventDay').value = day || '';
+                if (document.getElementById('eventName')) document.getElementById('eventName').value = '';
+                this.closeModal('dayDetailModal');
+                this.openModal('addEventModal');
+            }
+
+            deleteEvent(id) {
+                if (!confirm('Törlöd ezt az eseményt?')) return;
+                let events = JSON.parse(localStorage.getItem('events') || '[]');
+                events = events.filter(e => e.id !== id);
+                localStorage.setItem('events', JSON.stringify(events));
+                this.closeModal('dayDetailModal');
+                this.renderCalendar();
+                this.updateUpcomingEvents();
+            }
+
+            switchTab(tabId) {
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                document.getElementById(tabId).classList.add('active');
+
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+
+                if (tabId === 'maTab') this.renderMa();
+                if (tabId === 'habitTab') this.renderHabits();
+                if (tabId === 'sleepTab') this.renderSleep();
+                if (tabId === 'calendarTab') this.renderCalendar();
+            }
+
+            renderUI() {
+                this.renderMa();
+                this.renderHabits();
+                this.renderCalories();
+                this.renderSleep();
+                this.renderCalendar();
+                this.setupEmojiGrid();
+                this.setupColorGrid();
+                this.loadSettings();
+            }
+
+            renderMa() {
+                const today = new Date();
+                const hour = today.getHours();
+                let greeting = 'Jó napot';
+                if (hour < 12) greeting = 'Jó reggelt';
+                else if (hour < 18) greeting = 'Jó napot';
+                else greeting = 'Jó estét';
+
+                document.getElementById('greeting').textContent = greeting + ', ' + this.currentUser + '!';
+
+                // Stats
+                const habits = JSON.parse(localStorage.getItem('habits') || '[]');
+                const logs = JSON.parse(localStorage.getItem('habit_logs') || '{}');
+                const todayStr = today.toISOString().split('T')[0];
+                let habitsCount = 0;
+                habits.forEach(h => {
+                    if (logs[h.id] && logs[h.id][todayStr]) habitsCount++;
+                });
+                document.getElementById('habitsProgress').textContent = `${habitsCount}/${habits.length}`;
+
+                const cal = JSON.parse(localStorage.getItem('calories') || '{}');
+                const cals = Object.values(cal).reduce((a,b) => a + b.calories, 0);
+                const goal = JSON.parse(localStorage.getItem('settings') || {}).calorieGoal || 2500;
+                document.getElementById('caloriesProgress').textContent = `${cals}/${goal}`;
+
+                const weights = JSON.parse(localStorage.getItem('weight_log') || '[]');
+                if (weights.length) {
+                    document.getElementById('lastWeight').textContent = weights[weights.length-1].weight + ' kg';
+                }
+
+                const sleeps = JSON.parse(localStorage.getItem('sleep_log') || '[]');
+                if (sleeps.length) {
+                    const last = sleeps[sleeps.length-1];
+                    const [bh,bm] = last.bedtime.split(':');
+                    const [wh,wm] = last.wakeup.split(':');
+                    let b = parseInt(bh)*60 + parseInt(bm);
+                    let w = parseInt(wh)*60 + parseInt(wm);
+                    if (w < b) w += 1440;
+                    const duration = Math.round((w-b)/60*10)/10;
+                    document.getElementById('lastSleep').textContent = duration + ' h';
+                }
+
+                // Events
+                const events = JSON.parse(localStorage.getItem('events') || '[]');
+                const upcoming = events.filter(e => {
+                    const et = new Date(e.month+'-'+e.day);
+                    return et >= today;
+                }).slice(0,3).map(e => `<div class="event-item"><div class="event-date">${e.month}/${e.day}</div><div class="event-name">${e.emoji} ${e.name}</div></div>`).join('');
+                document.getElementById('upcomingEvents').innerHTML = upcoming || 'Nincsenek közeljövőbeli események';
+
+                // Workouts
+                const workouts = JSON.parse(localStorage.getItem('workouts') || '[]');
+                if (workouts.length) {
+                    const recent = workouts[workouts.length-1];
+                    document.getElementById('recentWorkoutCard').style.display = 'block';
+                    document.getElementById('recentWorkout').innerHTML = `<div><strong>${recent.name}</strong><div style="font-size:12px;color:#8B949E;margin-top:4px;">${recent.exercises.length} gyakorlat</div></div>`;
+                }
+            }
+
+            renderHabits() {
+                const habits = JSON.parse(localStorage.getItem('habits') || '[]');
+                const logs = JSON.parse(localStorage.getItem('habit_logs') || '{}');
+                const list = document.getElementById('habitList');
+
+                list.innerHTML = habits.map((h, idx) => {
+                    const today = new Date().toISOString().split('T')[0];
+                    const isDone = logs[h.id] && logs[h.id][today];
+                    const dots = this.getLast7Days(h.id, logs);
+                    const week = this.getWeekProgress(h.id, logs, h.frequency);
+
+                    return `<div class="habit-item">
+                        <div class="habit-emoji">${h.emoji}</div>
+                        <div class="habit-info">
+                            <div class="habit-name">${h.name}
+                                <span class="frequency-badge">${week}/7</span>
+                            </div>
+                            <div class="habit-dots">${dots}</div>
+                        </div>
+                        <button class="check-btn ${isDone ? 'done' : ''}" onclick="app.toggleHabit('${h.id}')">
+                            ${isDone ? '✓' : '·'}
+                        </button>
+                    </div>`;
+                }).join('');
+
+                // FAB
+                const fab = document.getElementById('storyFab');
+                fab.style.display = habits.length > 0 ? 'flex' : 'none';
+            }
+
+            toggleHabit(id) {
+                const today = new Date().toISOString().split('T')[0];
+                const logs = JSON.parse(localStorage.getItem('habit_logs') || '{}');
+                if (!logs[id]) logs[id] = {};
+                logs[id][today] = !logs[id][today];
+                localStorage.setItem('habit_logs', JSON.stringify(logs));
+                this.renderHabits();
+            }
+
+            getLast7Days(habitId, logs) {
+                let dots = '';
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const dateStr = d.toISOString().split('T')[0];
+                    const done = logs[habitId] && logs[habitId][dateStr];
+                    dots += `<div class="habit-dot ${done ? 'done' : ''}"></div>`;
+                }
+                return dots;
+            }
+
+            getWeekProgress(habitId, logs, frequency) {
+                let count = 0;
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const dateStr = d.toISOString().split('T')[0];
+                    if (logs[habitId] && logs[habitId][dateStr]) count++;
+                }
+                return count;
+            }
+
+            openStory() {
+                document.getElementById('storyOverlay').classList.add('active');
+                this.storyIndex = 0;
+                this.showStorySlide(0);
+            }
+
+            closeStory() {
+                document.getElementById('storyOverlay').classList.remove('active');
+            }
+
+            showStorySlide(index) {
+                this.storyIndex = index;
+                const slides = this.getStorySlides();
+                const content = document.getElementById('storyContent');
+                const dots = document.getElementById('storyDots');
+                const buttons = document.getElementById('storyButtons');
+
+                // Dots
+                dots.innerHTML = slides.map((_, i) => `<div class="story-dot ${i === index ? 'active' : ''}"></div>`).join('');
+
+                // Content
+                content.innerHTML = `<div class="story-slide">${slides[index]}</div>`;
+
+                // Buttons
+                buttons.innerHTML = '';
+                if (index > 0) {
+                    const prevBtn = document.createElement('button');
+                    prevBtn.className = 'story-btn-secondary';
+                    prevBtn.textContent = 'Vissza';
+                    prevBtn.onclick = () => this.showStorySlide(index - 1);
+                    buttons.appendChild(prevBtn);
+                }
+
+                if (index < slides.length - 1) {
+                    const nextBtn = document.createElement('button');
+                    nextBtn.textContent = 'Tovább';
+                    nextBtn.onclick = () => this.showStorySlide(index + 1);
+                    buttons.appendChild(nextBtn);
+                } else {
+                    const doneBtn = document.createElement('button');
+                    doneBtn.textContent = 'Kész! ✨';
+                    doneBtn.onclick = () => this.finishStory();
+                    buttons.appendChild(doneBtn);
+                }
+            }
+
+            getStorySlides() {
+                const today = new Date().toISOString().split('T')[0];
+                const settings = JSON.parse(localStorage.getItem('settings') || '{}');
+                const weights = JSON.parse(localStorage.getItem('weight_log') || '[]');
+                const sleeps = JSON.parse(localStorage.getItem('sleep_log') || '[]');
+                const habits = JSON.parse(localStorage.getItem('habits') || '[]');
+
+                return [
+                    `<h2>Üdvözlünk, ${settings.name || 'Botond'}! 👋</h2>
+                     <p style="font-size:18px;margin-top:16px;">Ma ${new Date().toLocaleDateString('hu-HU')}</p>
+                     <p style="font-size:16px;color:#8B949E;margin-top:16px;">Kezdjük a napi checkint!</p>`,
+
+                    `<h2>Mennyi a jelenlegi súlyod?</h2>
+                     <input type="number" id="storyWeight" placeholder="kg" step="0.1" style="margin:16px 0;font-size:18px;">`,
+
+                    `<h2>Hogyan alultál?</h2>
+                     <div style="display:flex;gap:8px;margin:16px 0;">
+                        <input type="time" id="storyBedtime" style="flex:1;">
+                        <input type="time" id="storyWakeup" style="flex:1;">
+                     </div>
+                     <div class="emoji-grid" id="storyQuality" style="margin:16px 0;">
+                        ${['😴','😩','😐','🙂','😄'].map((e,i) => `<button class="emoji-btn" onclick="document.getElementById('storyQuality').dataset.selected='${i}';this.parentElement.querySelectorAll('.emoji-btn').forEach(x=>x.classList.remove('selected'));this.classList.add('selected')">${e}</button>`).join('')}
+                     </div>`,
+
+                    `<h2>Milyen a hangulat és energia?</h2>
+                     <div style="text-align:center;margin:16px 0;">
+                        <input type="range" id="storyMood" min="1" max="10" value="5">
+                        <div style="margin-top:12px;font-size:28px;" id="moodEmoji">😐</div>
+                        <div style="margin-top:8px;font-size:18px;" id="moodText">Közömbösen (5/10)</div>
+                     </div>`,
+
+                    `<h2>Tegnap teljesült a szokásaid?</h2>
+                     <div class="checkbox-group" id="habitCheckboxes"></div>`,
+
+                    `<h2>Gratulálunk! 🎉</h2>
+                     <p style="font-size:18px;margin-top:16px;">Sikeresen kitöltötted a napi checkint!</p>
+                     <p style="font-size:16px;color:#8B949E;margin-top:16px;">Folytasd a munkádat! 💪</p>`
+                ];
+            }
+
+            finishStory() {
+                // Save data
+                const today = new Date().toISOString().split('T')[0];
+                const checkin = JSON.parse(localStorage.getItem('checkin_log') || '{}');
+                checkin[today] = true;
+                localStorage.setItem('checkin_log', JSON.stringify(checkin));
+
+                // Weight
+                const w = document.getElementById('storyWeight').value;
+                if (w) {
+                    const weights = JSON.parse(localStorage.getItem('weight_log') || '[]');
+                    weights.push({date: today, weight: parseFloat(w)});
+                    localStorage.setItem('weight_log', JSON.stringify(weights));
+                }
+
+                // Sleep
+                const bed = document.getElementById('storyBedtime').value;
+                const wake = document.getElementById('storyWakeup').value;
+                const q = document.getElementById('storyQuality').dataset.selected;
+                if (bed && wake) {
+                    const sleeps = JSON.parse(localStorage.getItem('sleep_log') || '[]');
+                    sleeps.push({date: today, bedtime: bed, wakeup: wake, quality: parseInt(q)});
+                    localStorage.setItem('sleep_log', JSON.stringify(sleeps));
+                }
+
+                this.closeStory();
+                this.showSuccess('Napi checkin kész! ✨');
+                this.renderUI();
+            }
+
+            showSuccess(msg) {
+                const div = document.createElement('div');
+                div.className = 'success-message';
+                div.textContent = msg;
+                document.body.appendChild(div);
+                setTimeout(() => div.remove(), 2000);
+            }
+
+            renderCalories() {
+                const today = new Date().toISOString().split('T')[0];
+                const cal = JSON.parse(localStorage.getItem('calories') || '{}');
+                const todayData = cal[today] || {items: []};
+
+                let totalCal = 0, totalProt = 0, totalCarbs = 0, totalFat = 0;
+                todayData.items.forEach(item => {
+                    totalCal += item.calories;
+                    totalProt += item.protein || 0;
+                    totalCarbs += item.carbs || 0;
+                    totalFat += item.fat || 0;
+                });
+
+                document.getElementById('proteinValue').textContent = totalProt + 'g';
+                document.getElementById('carbsValue').textContent = totalCarbs + 'g';
+                document.getElementById('fatValue').textContent = totalFat + 'g';
+
+                const goal = JSON.parse(localStorage.getItem('settings') || {}).calorieGoal || 2500;
+                this.drawDonutChart('calorieChart', totalCal, goal);
+
+                ['breakfast','lunch','dinner','snack'].forEach(meal => {
+                    const items = todayData.items.filter(i => i.meal === meal);
+                    const html = items.map(item => `
+                        <div style="padding:8px;background:#0D1117;border-radius:6px;margin:4px 0;display:flex;justify-content:space-between;align-items:center;">
+                            <div><div>${item.name}</div><div style="font-size:12px;color:#8B949E;">${item.calories} kcal</div></div>
+                            <button class="delete-btn" style="width:auto;margin:0;padding:4px 12px;" onclick="app.deleteFood('${today}','${item.id}')">🗑️</button>
+                        </div>
+                    `).join('');
+                    document.getElementById(meal + 'List').innerHTML = html;
+                });
+
+                // History chart
+                const last7 = {};
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const dateStr = d.toISOString().split('T')[0];
+                    last7[dateStr] = (cal[dateStr] || {items: []}).items.reduce((a,b) => a + b.calories, 0);
+                }
+                this.drawBarChart('calorieHistoryChart', Object.values(last7), goal);
+            }
+
+            openAddFoodModal(meal) {
+                this.currentFood = {meal};
+                this.openModal('addFoodModal');
+                document.getElementById('addFoodBtn').onclick = () => {
+                    const today = new Date().toISOString().split('T')[0];
+                    const cal = JSON.parse(localStorage.getItem('calories') || '{}');
+                    if (!cal[today]) cal[today] = {items: []};
+                    cal[today].items.push({
+                        id: Date.now(),
+                        name: document.getElementById('foodName').value,
+                        calories: parseInt(document.getElementById('foodCalories').value) || 0,
+                        protein: parseInt(document.getElementById('foodProtein').value) || 0,
+                        carbs: parseInt(document.getElementById('foodCarbs').value) || 0,
+                        fat: parseInt(document.getElementById('foodFat').value) || 0,
+                        meal: this.currentFood.meal
+                    });
+                    localStorage.setItem('calories', JSON.stringify(cal));
+                    this.closeModal('addFoodModal');
+                    this.renderCalories();
+                };
+            }
+
+            deleteFood(date, id) {
+                const cal = JSON.parse(localStorage.getItem('calories') || '{}');
+                if (cal[date]) {
+                    cal[date].items = cal[date].items.filter(i => i.id != id);
+                    localStorage.setItem('calories', JSON.stringify(cal));
+                    this.renderCalories();
+                }
+            }
+
+            renderWeight() {
+                const weights = JSON.parse(localStorage.getItem('weight_log') || '[]');
+                if (weights.length) {
+                    const last = weights[weights.length-1];
+                    document.getElementById('currentWeight').textContent = last.weight;
+
+                    const vals = weights.map(w => w.weight);
+                    document.getElementById('minWeight').textContent = Math.min(...vals).toFixed(1);
+                    document.getElementById('maxWeight').textContent = Math.max(...vals).toFixed(1);
+                    document.getElementById('avgWeight').textContent = (vals.reduce((a,b)=>a+b)/vals.length).toFixed(1);
+
+                    const trend = vals[vals.length-1] < vals[0] ? '↓' : vals[vals.length-1] > vals[0] ? '↑' : '→';
+                    document.getElementById('weightTrend').textContent = trend;
+
+                    const last30 = weights.slice(-30);
+                    this.drawLineChart('weightChart', last30.map(w => w.weight));
+                } else {
+                    document.getElementById('currentWeight').textContent = '-';
+                }
+            }
+
+            openWeightModal() {
+                this.openModal('weightModal');
+                document.getElementById('saveWeightBtn').onclick = () => {
+                    const today = new Date().toISOString().split('T')[0];
+                    const weights = JSON.parse(localStorage.getItem('weight_log') || '[]');
+                    weights.push({date: today, weight: parseFloat(document.getElementById('weightInput').value)});
+                    localStorage.setItem('weight_log', JSON.stringify(weights));
+                    this.closeModal('weightModal');
+                    this.renderWeight();
+                };
+            }
+
+            renderSleep() {
+                const sleeps = JSON.parse(localStorage.getItem('sleep_log') || '[]');
+
+                if (sleeps.length) {
+                    const last = sleeps[sleeps.length-1];
+                    const [bh,bm] = last.bedtime.split(':');
+                    const [wh,wm] = last.wakeup.split(':');
+                    let b = parseInt(bh)*60 + parseInt(bm);
+                    let w = parseInt(wh)*60 + parseInt(wm);
+                    if (w < b) w += 1440;
+                    const duration = (w-b)/60;
+                    const quality = ['😴','😩','😐','🙂','😄'][last.quality];
+                    document.getElementById('lastNightSummary').innerHTML = `
+                        <div style="padding:12px;background:#0D1117;border-radius:8px;">
+                            <div>${last.bedtime} - ${last.wakeup}</div>
+                            <div style="margin-top:8px;font-size:18px;">
+                                <span>${duration.toFixed(1)} óra</span> ${quality}
+                            </div>
+                        </div>
+                    `;
+
+                    const last7 = sleeps.slice(-7).map(s => {
+                        const [bh,bm] = s.bedtime.split(':');
+                        const [wh,wm] = s.wakeup.split(':');
+                        let b = parseInt(bh)*60 + parseInt(bm);
+                        let w = parseInt(wh)*60 + parseInt(wm);
+                        if (w < b) w += 1440;
+                        return {duration: w-b, quality: s.quality};
+                    });
+
+                    this.drawSleepChart('sleepChart', last7);
+
+                    const avgDur = last7.reduce((a,b)=>a+b.duration,0)/last7.length/60;
+                    const avgQual = last7.reduce((a,b)=>a+b.quality,0)/last7.length;
+                    document.getElementById('avgSleepDuration').textContent = avgDur.toFixed(1) + ' h';
+                    document.getElementById('avgSleepQuality').textContent = ['😴','😩','😐','🙂','😄'][Math.round(avgQual)];
+                }
+            }
+
+            openSleepModal() {
+                this.openModal('sleepModal');
+                const qualEmojis = ['😴','😩','😐','🙂','😄'];
+                const grid = document.getElementById('qualityGrid');
+                grid.innerHTML = qualEmojis.map((e,i) => `
+                    <button class="emoji-btn" onclick="this.parentElement.querySelectorAll('.emoji-btn').forEach(x=>x.classList.remove('selected'));this.classList.add('selected');this.parentElement.dataset.selected='${i}';">${e}</button>
+                `).join('');
+
+                document.getElementById('saveSleepBtn').onclick = () => {
+                    const today = new Date().toISOString().split('T')[0];
+                    const quality = parseInt(grid.dataset.selected || 2);
+                    const sleeps = JSON.parse(localStorage.getItem('sleep_log') || '[]');
+                    sleeps.push({
+                        date: today,
+                        bedtime: document.getElementById('bedtime').value,
+                        wakeup: document.getElementById('wakeup').value,
+                        quality
+                    });
+                    localStorage.setItem('sleep_log', JSON.stringify(sleeps));
+                    this.closeModal('sleepModal');
+                    this.renderSleep();
+                };
+            }
+
+            renderCalendar() {
+                const year = this.currentYear;
+                const month = this.currentMonth;
+
+                document.getElementById('monthYear').textContent = HUNGARIAN_MONTHS[month] + ' ' + year;
+
+                // Monday-first: convert Sunday(0) → 6, Mon(1) → 0, ...
+                const rawFirst = new Date(year, month, 1).getDay();
+                const firstDay = rawFirst === 0 ? 6 : rawFirst - 1;
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const daysInPrevMonth = new Date(year, month, 0).getDate();
+                const holidays = getHolidays(year);
+
+                const grid = document.getElementById('calendarGrid');
+                grid.innerHTML = '';
+
+                // Day labels Mon–Sun
+                ['H','K','Sze','Cs','P','Szo','V'].forEach(d => {
+                    const label = document.createElement('div');
+                    label.className = 'calendar-day-label';
+                    label.textContent = d;
+                    grid.appendChild(label);
+                });
+
+                // Previous month fill
+                for (let i = firstDay - 1; i >= 0; i--) {
+                    const day = document.createElement('div');
+                    day.className = 'calendar-day other-month';
+                    day.textContent = daysInPrevMonth - i;
+                    grid.appendChild(day);
+                }
+
+                // Current month
+                const today = new Date();
+                const events = JSON.parse(localStorage.getItem('events') || '[]');
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const day = document.createElement('div');
+                    day.className = 'calendar-day';
+                    day.textContent = i;
+
+                    if (today.getDate() === i && today.getMonth() === month && today.getFullYear() === year) {
+                        day.classList.add('today');
+                    }
+
+                    const isHoliday = holidays.some(h => h.m === (month+1) && h.d === i);
+                    if (isHoliday) day.classList.add('holiday');
+
+                    if (events.some(e => e.month == (month+1) && e.day == i)) {
+                        day.classList.add('has-event');
+                    }
+
+                    day.onclick = () => this.showDayDetail(i);
+                    grid.appendChild(day);
+                }
+
+                // Next month
+                const cellsNeeded = grid.children.length - 7; // 7 labels
+                const cellsRemaining = 42 - cellsNeeded;
+                for (let i = 1; i <= cellsRemaining; i++) {
+                    const day = document.createElement('div');
+                    day.className = 'calendar-day other-month';
+                    day.textContent = i;
+                    grid.appendChild(day);
+                }
+
+                this.updateUpcomingEvents();
+            }
+
+            prevMonth() {
+                this.currentMonth--;
+                if (this.currentMonth < 0) {
+                    this.currentMonth = 11;
+                    this.currentYear--;
+                }
+                this.renderCalendar();
+            }
+
+            nextMonth() {
+                this.currentMonth++;
+                if (this.currentMonth > 11) {
+                    this.currentMonth = 0;
+                    this.currentYear++;
+                }
+                this.renderCalendar();
+            }
+
+            showDayDetail(day) {
+                const m = this.currentMonth + 1;
+                const year = this.currentYear;
+                const events = JSON.parse(localStorage.getItem('events') || '[]');
+                const dayEvents = events.filter(e => e.month == m && e.day == day);
+                const nameday = ND[m + '-' + day];
+                const holidays = getHolidays(year);
+                const holiday = holidays.find(h => h.m === m && h.d === day);
+
+                let html = `<h3 style="margin-bottom:14px;font-size:17px">${HUNGARIAN_MONTHS[this.currentMonth]} ${day}.</h3>`;
+
+                if (holiday) html += `<div class="event-item" style="background:rgba(63,185,80,0.1);border-radius:8px;padding:10px 12px;margin-bottom:8px"><strong>${holiday.name}</strong><span style="color:var(--muted);font-size:12px;margin-left:6px">Ünnepnap</span></div>`;
+
+                if (nameday) html += `<div class="event-item" style="padding:10px 0;border-bottom:1px solid var(--border)">🌸 <strong>${nameday}</strong> névnapja</div>`;
+
+                if (dayEvents.length === 0 && !holiday && !nameday) {
+                    html += `<p style="color:var(--muted);text-align:center;padding:20px 0">Ezen a napon nincs esemény.</p>`;
+                }
+
+                dayEvents.forEach(e => {
+                    const age = e.year ? year - e.year : null;
+                    html += `<div class="event-item" style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+                        <span>${e.emoji||'📌'} <strong>${e.name}</strong>${age ? ` <span style="color:var(--muted);font-size:13px">(${age} éves)</span>` : ''}</span>
+                        <button onclick="app.deleteEvent('${e.id}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px">🗑️</button>
+                    </div>`;
+                });
+
+                html += `<button class="btn btn-outline" style="width:100%;margin-top:14px" onclick="app.openEventModal(${m},${day})">+ Esemény hozzáadása</button>`;
+
+                document.getElementById('dayDetailContent').innerHTML = html;
+                this.openModal('dayDetailModal');
+            }
+
+            updateUpcomingEvents() {
+                const events = JSON.parse(localStorage.getItem('events') || '[]');
+                const today = new Date();
+                let upcoming = [];
+
+                for (let i = 0; i < 365; i++) {
+                    const d = new Date(today);
+                    d.setDate(d.getDate() + i);
+                    const m = d.getMonth() + 1;
+                    const day = d.getDate();
+
+                    const dayEvents = events.filter(e => e.month == m && e.day == day);
+                    dayEvents.forEach(e => {
+                        const daysUntil = i;
+                        upcoming.push({...e, daysUntil});
+                    });
+
+                    if (upcoming.length >= 10) break;
+                }
+
+                const html = upcoming.slice(0, 10).map(e => `
+                    <div class="event-item">
+                        <div class="event-date">${e.daysUntil} nap múlva</div>
+                        <div class="event-name">${e.emoji} ${e.name}</div>
+                    </div>
+                `).join('');
+
+                document.getElementById('upcomingEventsList').innerHTML = html || 'Nincsenek közeljövőbeli események';
+            }
+
+            setupEmojiGrid() {
+                const grids = document.querySelectorAll('#emojiGrid');
+                grids.forEach(grid => {
+                    grid.innerHTML = EMOJIS.map((e, i) => `
+                        <button class="emoji-btn" onclick="this.parentElement.querySelectorAll('.emoji-btn').forEach(x=>x.classList.remove('selected'));this.classList.add('selected');this.parentElement.dataset.selected='${e}';">${e}</button>
+                    `).join('');
+                });
+            }
+
+            setupColorGrid() {
+                const grids = document.querySelectorAll('#colorGrid');
+                grids.forEach(grid => {
+                    grid.innerHTML = COLORS.map((c, i) => `
+                        <button class="color-btn" style="background:${c};" onclick="this.parentElement.querySelectorAll('.color-btn').forEach(x=>x.classList.remove('selected'));this.classList.add('selected');this.parentElement.dataset.selected='${c}';"></button>
+                    `).join('');
+                });
+            }
+
+            drawDonutChart(id, value, max) {
+                const svg = document.getElementById(id);
+                if (!svg) return;
+                svg.innerHTML = '';
+
+                const size = 200;
+                const radius = 80;
+                const circumference = 2 * Math.PI * radius;
+                const offset = circumference * (1 - Math.min(value, max) / max);
+
+                svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+
+                const bg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                bg.setAttribute('cx', size/2);
+                bg.setAttribute('cy', size/2);
+                bg.setAttribute('r', radius);
+                bg.setAttribute('fill', 'none');
+                bg.setAttribute('stroke', '#30363D');
+                bg.setAttribute('stroke-width', '12');
+                svg.appendChild(bg);
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', size/2);
+                circle.setAttribute('cy', size/2);
+                circle.setAttribute('r', radius);
+                circle.setAttribute('fill', 'none');
+                circle.setAttribute('stroke', '#3FB950');
+                circle.setAttribute('stroke-width', '12');
+                circle.setAttribute('stroke-dasharray', circumference);
+                circle.setAttribute('stroke-dashoffset', offset);
+                circle.setAttribute('stroke-linecap', 'round');
+                circle.setAttribute('transform', `rotate(-90 ${size/2} ${size/2})`);
+                svg.appendChild(circle);
+
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', size/2);
+                text.setAttribute('y', size/2);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('dominant-baseline', 'middle');
+                text.setAttribute('font-size', '28');
+                text.setAttribute('font-weight', 'bold');
+                text.setAttribute('fill', '#E6EDF3');
+                text.textContent = Math.round(value);
+                svg.appendChild(text);
+            }
+
+            drawBarChart(id, values, max) {
+                const svg = document.getElementById(id);
+                if (!svg || !values.length) return;
+                svg.innerHTML = '';
+
+                const width = 300;
+                const height = 200;
+                const padding = 20;
+                const barWidth = (width - 2*padding) / values.length;
+                const maxVal = Math.max(...values, max);
+
+                svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+                // Axis
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', padding);
+                line.setAttribute('y1', height - padding);
+                line.setAttribute('x2', width - padding);
+                line.setAttribute('y2', height - padding);
+                line.setAttribute('stroke', '#30363D');
+                line.setAttribute('stroke-width', '2');
+                svg.appendChild(line);
+
+                // Bars
+                values.forEach((val, i) => {
+                    const barHeight = (val / maxVal) * (height - 2*padding);
+                    const x = padding + i * barWidth;
+                    const y = height - padding - barHeight;
+
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('x', x + 2);
+                    rect.setAttribute('y', y);
+                    rect.setAttribute('width', barWidth - 4);
+                    rect.setAttribute('height', barHeight);
+                    rect.setAttribute('fill', '#3FB950');
+                    svg.appendChild(rect);
+                });
+
+                // Goal line
+                if (max < maxVal) {
+                    const goalY = height - padding - (max / maxVal) * (height - 2*padding);
+                    const goalLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    goalLine.setAttribute('x1', padding);
+                    goalLine.setAttribute('y1', goalY);
+                    goalLine.setAttribute('x2', width - padding);
+                    goalLine.setAttribute('y2', goalY);
+                    goalLine.setAttribute('stroke', '#8B949E');
+                    goalLine.setAttribute('stroke-width', '2');
+                    goalLine.setAttribute('stroke-dasharray', '5');
+                    svg.appendChild(goalLine);
+                }
+            }
+
+            drawLineChart(id, values) {
+                const svg = document.getElementById(id);
+                if (!svg || !values.length) return;
+                svg.innerHTML = '';
+
+                const width = 300;
+                const height = 200;
+                const padding = 20;
+                const minVal = Math.min(...values);
+                const maxVal = Math.max(...values);
+                const range = maxVal - minVal || 1;
+
+                svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+                const points = values.map((v, i) => {
+                    const x = padding + (i / (values.length - 1)) * (width - 2*padding);
+                    const y = height - padding - ((v - minVal) / range) * (height - 2*padding);
+                    return {x, y, v};
+                });
+
+                let pathData = `M ${points[0].x} ${points[0].y}`;
+                for (let i = 1; i < points.length; i++) {
+                    pathData += ` L ${points[i].x} ${points[i].y}`;
+                }
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', pathData);
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke', '#3FB950');
+                path.setAttribute('stroke-width', '2');
+                path.setAttribute('stroke-linecap', 'round');
+                svg.appendChild(path);
+
+                points.forEach(p => {
+                    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    dot.setAttribute('cx', p.x);
+                    dot.setAttribute('cy', p.y);
+                    dot.setAttribute('r', '3');
+                    dot.setAttribute('fill', '#3FB950');
+                    svg.appendChild(dot);
+                });
+            }
+
+            drawSleepChart(id, data) {
+                const svg = document.getElementById(id);
+                if (!svg) return;
+                svg.innerHTML = '';
+
+                const width = 300;
+                const height = 200;
+                const padding = 20;
+                const maxDuration = 600; // 10 hours
+
+                svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+                const barWidth = (width - 2*padding) / data.length;
+
+                data.forEach((item, i) => {
+                    const barHeight = (item.duration / maxDuration) * (height - 2*padding);
+                    const x = padding + i * barWidth;
+                    const y = height - padding - barHeight;
+
+                    const colors = ['#DA3633','#FFA657','#8B949E','#1F6FEB','#3FB950'];
+                    const color = colors[item.quality];
+
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('x', x + 2);
+                    rect.setAttribute('y', y);
+                    rect.setAttribute('width', barWidth - 4);
+                    rect.setAttribute('height', barHeight);
+                    rect.setAttribute('fill', color);
+                    svg.appendChild(rect);
+                });
+            }
+
+            openModal(id) {
+                const modal = document.getElementById(id);
+                const overlay = document.getElementById('overlay');
+                modal.style.display = 'block';
+                overlay.classList.add('active');
+            }
+
+            closeModal(id) {
+                const modal = document.getElementById(id);
+                const overlay = document.getElementById('overlay');
+                modal.style.display = 'none';
+                overlay.classList.remove('active');
+            }
+
+            loadSettings() {
+                const settings = JSON.parse(localStorage.getItem('settings') || '{}');
+                this.currentUser = settings.name || 'Botond';
+                document.getElementById('nameSetting').value = this.currentUser;
+                document.getElementById('calorieGoal').value = settings.calorieGoal || 2500;
+                document.getElementById('notificationsEnabled').checked = settings.notificationsEnabled || false;
+                document.getElementById('notificationSettings').style.display = settings.notificationsEnabled ? 'block' : 'none';
+                document.getElementById('morningTime').value = settings.morningTime || '08:00';
+                document.getElementById('eveningTime').value = settings.eveningTime || '21:00';
+            }
+
+            requestNotificationPermission() {
+                if ('Notification' in window && Notification.permission === 'default') {
+                    Notification.requestPermission();
+                }
+            }
+
+            scheduleNotifications() {
+                const settings = JSON.parse(localStorage.getItem('settings') || '{}');
+                if (!settings.notificationsEnabled) return;
+
+                const [mh, mm] = (settings.morningTime || '08:00').split(':');
+                const [eh, em] = (settings.eveningTime || '21:00').split(':');
+
+                this.scheduleNotificationAtTime(parseInt(mh), parseInt(mm), true);
+                this.scheduleNotificationAtTime(parseInt(eh), parseInt(em), false);
+            }
+
+            scheduleNotificationAtTime(hour, minute, isMorning) {
+                const now = new Date();
+                const scheduledTime = new Date();
+                scheduledTime.setHours(hour, minute, 0);
+
+                if (scheduledTime <= now) {
+                    scheduledTime.setDate(scheduledTime.getDate() + 1);
+                }
+
+                const timeout = scheduledTime.getTime() - now.getTime();
+                setTimeout(() => {
+                    this.sendNotification(isMorning);
+                    this.scheduleNotificationAtTime(hour, minute, isMorning);
+                }, timeout);
+            }
+
+            sendNotification(isMorning) {
+                if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+                const messages = isMorning ? MORNING_MESSAGES : EVENING_MESSAGES;
+                const msg = messages[Math.floor(Math.random() * messages.length)].replace('{name}', this.currentUser);
+
+                new Notification('LifeCoach', {
+                    body: msg,
+                    badge: '💪',
+                    tag: 'lifecoach'
+                });
+            }
+
+            exportData() {
+                const data = {
+                    settings: localStorage.getItem('settings'),
+                    habits: localStorage.getItem('habits'),
+                    habit_logs: localStorage.getItem('habit_logs'),
+                    workouts: localStorage.getItem('workouts'),
+                    workout_templates: localStorage.getItem('workout_templates'),
+                    calories: localStorage.getItem('calories'),
+                    weight_log: localStorage.getItem('weight_log'),
+                    sleep_log: localStorage.getItem('sleep_log'),
+                    events: localStorage.getItem('events'),
+                    checkin_log: localStorage.getItem('checkin_log')
+                };
+
+                const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'lifecoach-data.json';
+                a.click();
+            }
+
+            importDataBtn() {
+                document.getElementById('importFile').click();
+                document.getElementById('importFile').onchange = (e) => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const data = JSON.parse(event.target.result);
+                        Object.entries(data).forEach(([key, value]) => {
+                            if (value) localStorage.setItem(key, value);
+                        });
+                        this.showSuccess('Adatok importálva! ✅');
+                        this.renderUI();
+                    };
+                    reader.readAsText(file);
+                };
+            }
+
+            resetAllData() {
+                if (confirm('Biztos vagy benne? Ez minden adatot töröl!')) {
+                    localStorage.clear();
+                    location.reload();
+                }
+            }
+
+            openChangePinModal() {
+                // Simplified: just allow PIN change
+                const newPin = prompt('Új PIN (4 számjegy):');
+                if (newPin && newPin.length === 4 && /^\d+$/.test(newPin)) {
+                    localStorage.setItem('pin', newPin);
+                    this.showSuccess('PIN megváltoztatva! ✅');
+                } else {
+                    this.showSuccess('Érvénytelen PIN!');
+                }
+            }
+        }
+
+        const app = new LifeCoachApp();
+
+        // Settings save
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            document.getElementById('settingsModal').style.display = 'block';
+            document.getElementById('overlay').classList.add('active');
+        });
+
+        // Settings modal close and save
+        const closeSettingsBtn = document.querySelector('#settingsModal .close-btn');
+        if (closeSettingsBtn) {
+            closeSettingsBtn.addEventListener('click', () => {
+                const settings = JSON.parse(localStorage.getItem('settings') || '{}');
+                settings.name = document.getElementById('nameSetting').value || 'Botond';
+                settings.calorieGoal = parseInt(document.getElementById('calorieGoal').value) || 2500;
+                settings.notificationsEnabled = document.getElementById('notificationsEnabled').checked;
+                settings.morningTime = document.getElementById('morningTime').value;
+                settings.eveningTime = document.getElementById('eveningTime').value;
+                localStorage.setItem('settings', JSON.stringify(settings));
+                app.currentUser = settings.name;
+                app.closeModal('settingsModal');
+                app.scheduleNotifications();
+            });
+        }
+    </script>
+</body>
+</html>
