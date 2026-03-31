@@ -1630,8 +1630,9 @@
             }
 
             openStory() {
-                document.getElementById('storyOverlay').classList.add('active');
+                this.storyData = {};  // reset data on every new open
                 this.storyIndex = 0;
+                document.getElementById('storyOverlay').classList.add('active');
                 this.showStorySlide(0);
             }
 
@@ -1639,7 +1640,25 @@
                 document.getElementById('storyOverlay').classList.remove('active');
             }
 
+            saveCurrentSlideData(index) {
+                // Save data from current slide before navigating away
+                if (!this.storyData) this.storyData = {};
+                const w = document.getElementById('storyWeight');
+                if (w && w.value) this.storyData.weight = w.value;
+                const bed = document.getElementById('storyBedtime');
+                const wake = document.getElementById('storyWakeup');
+                const q = document.getElementById('storyQuality');
+                if (bed && bed.value) this.storyData.bedtime = bed.value;
+                if (wake && wake.value) this.storyData.wakeup = wake.value;
+                if (q && q.dataset.selected !== undefined) this.storyData.quality = q.dataset.selected;
+                const mood = document.getElementById('storyMood');
+                if (mood) this.storyData.mood = mood.value;
+            }
+
             showStorySlide(index) {
+                // Save data from current slide before switching
+                this.saveCurrentSlideData(this.storyIndex);
+
                 this.storyIndex = index;
                 const slides = this.getStorySlides();
                 const content = document.getElementById('storyContent');
@@ -1652,27 +1671,58 @@
                 // Content
                 content.innerHTML = `<div class="story-slide">${slides[index]}</div>`;
 
+                // Restore saved values if navigating back
+                if (this.storyData) {
+                    const w = document.getElementById('storyWeight');
+                    if (w && this.storyData.weight) w.value = this.storyData.weight;
+                    const bed = document.getElementById('storyBedtime');
+                    if (bed && this.storyData.bedtime) bed.value = this.storyData.bedtime;
+                    const wake = document.getElementById('storyWakeup');
+                    if (wake && this.storyData.wakeup) wake.value = this.storyData.wakeup;
+                    const mood = document.getElementById('storyMood');
+                    if (mood && this.storyData.mood) {
+                        mood.value = this.storyData.mood;
+                        this.updateMoodDisplay(this.storyData.mood);
+                    }
+                }
+
+                // Set up mood slider live update
+                const moodEl = document.getElementById('storyMood');
+                if (moodEl) {
+                    moodEl.addEventListener('input', (e) => this.updateMoodDisplay(e.target.value));
+                    this.updateMoodDisplay(moodEl.value);
+                }
+
                 // Buttons
                 buttons.innerHTML = '';
                 if (index > 0) {
                     const prevBtn = document.createElement('button');
                     prevBtn.className = 'story-btn-secondary';
-                    prevBtn.textContent = 'Vissza';
+                    prevBtn.textContent = '← Vissza';
                     prevBtn.onclick = () => this.showStorySlide(index - 1);
                     buttons.appendChild(prevBtn);
                 }
 
                 if (index < slides.length - 1) {
                     const nextBtn = document.createElement('button');
-                    nextBtn.textContent = 'Tovább';
+                    nextBtn.textContent = 'Tovább →';
                     nextBtn.onclick = () => this.showStorySlide(index + 1);
                     buttons.appendChild(nextBtn);
                 } else {
                     const doneBtn = document.createElement('button');
-                    doneBtn.textContent = 'Kész! ✨';
+                    doneBtn.textContent = '✨ Kész, kezdjük a napot!';
                     doneBtn.onclick = () => this.finishStory();
                     buttons.appendChild(doneBtn);
                 }
+            }
+
+            updateMoodDisplay(val) {
+                const emojis = ['','😞','😕','😐','😐','😊','😊','😄','😄','🤩','🤩'];
+                const texts = ['','Nagyon rosszul','Nem jól','Közepesen','Közepesen','Jól','Jól','Nagyon jól','Nagyon jól','Kiválóan','Kiválóan'];
+                const e = document.getElementById('moodEmoji');
+                const t = document.getElementById('moodText');
+                if (e) e.textContent = emojis[val] || '😐';
+                if (t) t.textContent = `${texts[val] || 'Közepesen'} (${val}/10)`;
             }
 
             getStorySlides() {
@@ -1716,32 +1766,52 @@
             }
 
             finishStory() {
-                // Save data
+                // First save any data still in the current (last) slide
+                this.saveCurrentSlideData(this.storyIndex);
+
                 const today = new Date().toISOString().split('T')[0];
+                const d = this.storyData || {};
+
+                // Mark checkin done
                 const checkin = JSON.parse(localStorage.getItem('checkin_log') || '{}');
-                checkin[today] = true;
+                checkin[today] = { done: true, ts: Date.now() };
                 localStorage.setItem('checkin_log', JSON.stringify(checkin));
 
                 // Weight
-                const w = document.getElementById('storyWeight').value;
-                if (w) {
+                if (d.weight) {
                     const weights = JSON.parse(localStorage.getItem('weight_log') || '[]');
-                    weights.push({date: today, weight: parseFloat(w)});
-                    localStorage.setItem('weight_log', JSON.stringify(weights));
+                    // Remove today's existing entry if any, then add new
+                    const filtered = weights.filter(w => w.date !== today);
+                    filtered.push({ date: today, weight: parseFloat(d.weight) });
+                    localStorage.setItem('weight_log', JSON.stringify(filtered));
                 }
 
                 // Sleep
-                const bed = document.getElementById('storyBedtime').value;
-                const wake = document.getElementById('storyWakeup').value;
-                const q = document.getElementById('storyQuality').dataset.selected;
-                if (bed && wake) {
+                if (d.bedtime && d.wakeup) {
                     const sleeps = JSON.parse(localStorage.getItem('sleep_log') || '[]');
-                    sleeps.push({date: today, bedtime: bed, wakeup: wake, quality: parseInt(q)});
-                    localStorage.setItem('sleep_log', JSON.stringify(sleeps));
+                    const filtered = sleeps.filter(s => s.date !== today);
+                    filtered.push({
+                        date: today,
+                        bedtime: d.bedtime,
+                        wakeup: d.wakeup,
+                        quality: d.quality !== undefined ? parseInt(d.quality) : 2
+                    });
+                    localStorage.setItem('sleep_log', JSON.stringify(filtered));
                 }
 
+                // Mood
+                if (d.mood) {
+                    const moods = JSON.parse(localStorage.getItem('mood_log') || '[]');
+                    const filtered = moods.filter(m => m.date !== today);
+                    filtered.push({ date: today, mood: parseInt(d.mood) });
+                    localStorage.setItem('mood_log', JSON.stringify(filtered));
+                }
+
+                // Reset storyData for next time
+                this.storyData = {};
+
                 this.closeStory();
-                this.showSuccess('Napi checkin kész! ✨');
+                this.showSuccess('Napi checkin kész! 🎉');
                 this.renderUI();
             }
 
